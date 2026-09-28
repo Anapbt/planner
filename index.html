@@ -95,12 +95,13 @@ h1,h2{margin:0}
 .fab.round{width:56px;padding:0}
 
 /* --- feuille d'ajout --- */
-.overlay{position:fixed;inset:0;background:rgba(58,27,46,.5);z-index:10;display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
-.sheet{width:100%;max-width:520px;max-height:92vh;overflow-y:auto;background:var(--card);border-radius:28px 28px 0 0;padding:12px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:20px;animation:up .25s ease-out}
-@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.addpage{max-width:520px;margin:0 auto;min-height:100vh;padding:calc(12px + var(--safe-t)) 20px calc(40px + var(--safe-b));display:flex;flex-direction:column;gap:22px;animation:fade .2s}
 @keyframes fade{from{opacity:0}}
-.grab{align-self:center;width:40px;height:5px;border-radius:3px;background:var(--line)}
-.s-head{display:flex;align-items:center;justify-content:space-between}
+.a-back{align-self:flex-start;border:0;background:transparent;color:var(--muted);display:flex;align-items:center;gap:4px;font-size:15px;font-weight:500;min-height:44px;padding:0}
+.added{display:flex;flex-direction:column;gap:6px}
+.added div{font-size:15px;color:var(--ink);display:flex;gap:8px;align-items:baseline}
+.added span{font-size:13px;color:var(--muted);white-space:nowrap}
+.toast{align-self:center;font-size:14px;font-weight:600;color:var(--plum);background:var(--sand);padding:6px 14px;border-radius:14px;margin-top:-10px}
 .s-title{font-family:var(--display);font-weight:800;font-size:26px;color:var(--ink)}
 .close{width:44px;height:44px;border-radius:22px;border:0;background:var(--bg);display:flex;align-items:center;justify-content:center}
 .sec{display:flex;flex-direction:column;gap:8px}
@@ -352,10 +353,12 @@ function openSheet(){
   var def;
   if(ui.view==="day") def = ui.day;
   else { var tk = todayKey(); def = (tk>=ymd(ws) && tk<=ymd(addDays(ws,6))) ? tk : ymd(ws); }
-  sh = { ws:ws, mode:"day", day:def, cat: catById(db.lastCat) ? db.lastCat : db.cats[0].id, title:"", adding:false, newName:"" };
+  sh = { ws:ws, mode:"day", day:def, cat: catById(db.lastCat) ? db.lastCat : db.cats[0].id, title:"", adding:false, newName:"", added:[], toast:false };
+  app.classList.add("hidden");
+  window.scrollTo(0,0);
   renderSheet(true);
 }
-function closeSheet(){ sh = null; sheetRoot.innerHTML = ""; }
+function closeSheet(){ sh = null; sheetRoot.innerHTML = ""; app.classList.remove("hidden"); render(); window.scrollTo(0,0); }
 function renderSheet(focusTitle){
   var days = "";
   for(var i=0;i<7;i++){
@@ -369,21 +372,23 @@ function renderSheet(focusTitle){
   cats += sh.adding ? '' : '<button class="newcat" data-s="newcat">'+ICON.plus.replace(/20/g,"16")+'Nouvelle catégorie</button>';
   var newRow = sh.adding ? '<div class="newrow"><input type="text" id="newcat" placeholder="Nom de la catégorie" value="'+esc(sh.newName)+'" enterkeyhint="done" autocomplete="off"><button data-s="savecat">OK</button></div>' : '';
 
+  var added = sh.added.length ? '<div class="sec"><div class="lab">Ajoutées</div><div class="added">'+
+    sh.added.map(function(a){ return '<div>'+esc(a.t)+'<span>'+esc(a.w)+'</span></div>'; }).join("")+'</div></div>' : '';
   sheetRoot.innerHTML =
-    '<div class="overlay" data-s="overlay">'+
-      '<div class="sheet" role="dialog" aria-modal="true" aria-label="Nouvelle tâche">'+
-        '<div class="grab"></div>'+
-        '<div class="s-head"><h2 class="s-title">Nouvelle tâche</h2><button class="close" data-s="close" aria-label="Fermer">'+ICON.x+'</button></div>'+
-        '<label class="field">Tâche<input type="text" id="title" value="'+esc(sh.title)+'" placeholder="Ex. Nettoyer le frigo" enterkeyhint="done" autocomplete="off"></label>'+
-        '<div class="sec"><div class="lab">Quand</div>'+
-          '<div class="seg"><button data-mode="day" class="'+(sh.mode==="day"?'on':'')+'">Un jour précis</button><button data-mode="week" class="'+(sh.mode==="week"?'on':'')+'">Dans la semaine</button></div>'+
-          (sh.mode==="day" ? '<div class="pick">'+days+'</div>' : '<div class="small">Semaine du '+fmtShort.format(sh.ws)+' au '+fmtShort.format(addDays(sh.ws,6))+'</div>')+
-        '</div>'+
-        (sh.mode==="day" ? '<div class="sec"><div class="lab">Catégorie</div><div class="cats">'+cats+'</div>'+newRow+'</div>' : '')+
-        '<button class="submit" data-s="submit"'+(sh.title.trim()?'':' disabled')+'>Ajouter la tâche</button>'+
+    '<div class="addpage">'+
+      '<button class="a-back" data-s="close">'+ICON.left+(sh.added.length?'Terminé':'Retour')+'</button>'+
+      '<h1 class="title">Nouvelle tâche</h1>'+
+      '<div class="sec"><div class="lab">Quand</div>'+
+        '<div class="seg"><button data-mode="day" class="'+(sh.mode==="day"?'on':'')+'">Un jour précis</button><button data-mode="week" class="'+(sh.mode==="week"?'on':'')+'">Dans la semaine</button></div>'+
+        (sh.mode==="day" ? '<div class="pick">'+days+'</div>' : '<div class="small">Semaine du '+fmtShort.format(sh.ws)+' au '+fmtShort.format(addDays(sh.ws,6))+'</div>')+
       '</div>'+
+      (sh.mode==="day" ? '<div class="sec"><div class="lab">Catégorie</div><div class="cats">'+cats+'</div>'+newRow+'</div>' : '')+
+      '<label class="field">Tâche<input type="text" id="title" value="'+esc(sh.title)+'" placeholder="Ex. Nettoyer le frigo" enterkeyhint="done" autocomplete="off"></label>'+
+      '<button class="submit" data-s="submit"'+(sh.title.trim()?'':' disabled')+'>Ajouter la tâche</button>'+
+      (sh.toast ? '<div class="toast">Tâche ajoutée ✓</div>' : '')+
+      added+
     '</div>';
-  if(focusTitle){ var ti = document.getElementById("title"); if(ti) ti.focus(); }
+  if(focusTitle && !sh.adding){ var ti = document.getElementById("title"); if(ti) ti.focus({preventScroll:true}); }
   if(sh.adding){ var ni = document.getElementById("newcat"); if(ni){ ni.focus(); } }
 }
 function saveNewCat(){
@@ -404,12 +409,17 @@ function submit(){
   var t = { id:uid(), title:title, done:false };
   if(sh.mode==="day"){ t.date = sh.day; t.cat = sh.cat; db.lastCat = sh.cat; }
   else { t.week = ymd(sh.ws); }
-  db.tasks.push(t); save(); closeSheet(); render();
+  db.tasks.push(t); save();
+  var where = sh.mode==="day" ? SHORT[(parse(sh.day).getDay()+6)%7]+' '+parse(sh.day).getDate()+(catById(sh.cat)?' · '+catById(sh.cat).name:'') : 'Semaine';
+  sh.added.unshift({t:title, w:where});
+  sh.title = ""; sh.toast = true;
+  renderSheet(true);
+  clearTimeout(submit._t);
+  submit._t = setTimeout(function(){ if(sh){ sh.toast=false; var el=sheetRoot.querySelector(".toast"); if(el) el.remove(); } }, 1800);
 }
 sheetRoot.addEventListener("click", function(e){
   if(!sh) return;
   var el;
-  if(e.target.dataset && e.target.dataset.s==="overlay"){ closeSheet(); return; }
   if((el = e.target.closest("[data-pick]"))){ sh.day = el.dataset.pick; renderSheet(); return; }
   if((el = e.target.closest("[data-mode]"))){ sh.mode = el.dataset.mode; renderSheet(); return; }
   if((el = e.target.closest("[data-cat]"))){ sh.cat = el.dataset.cat; renderSheet(); return; }
@@ -431,7 +441,7 @@ sheetRoot.addEventListener("input", function(e){
 sheetRoot.addEventListener("keydown", function(e){
   if(e.key!=="Enter" || !sh) return;
   if(e.target.id==="newcat"){ e.preventDefault(); saveNewCat(); }
-  else if(e.target.id==="title"){ e.preventDefault(); e.target.blur(); }
+  else if(e.target.id==="title"){ e.preventDefault(); if(sh.title.trim()) submit(); else e.target.blur(); }
 });
 
 /* ---------- Démarrage ---------- */
