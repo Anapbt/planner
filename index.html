@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ECDCC9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Planner">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Planner</title>
+<style>
+@font-face{font-family:"Bricolage";src:url(fonts/bricolage-grotesque-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Bricolage";src:url(fonts/bricolage-grotesque-latin-800-normal.woff2) format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Figtree";src:url(fonts/figtree-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Figtree";src:url(fonts/figtree-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Figtree";src:url(fonts/figtree-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+
+:root{
+  --bg:#ECDCC9; --card:#F7EDE1; --line:#CAC2B5; --plum:#4D243D; --ink:#3A1B2E;
+  --muted:#6E5563; --sand:#EDD4B2; --rose:#D0A98F; --field:#FBF5EE;
+  --on-plum:#FBF3EA; --on-plum-muted:#DCC6CF; --ring:#8F7A6B; --track:#6B3E59;
+  --display:"Bricolage",Georgia,serif; --body:"Figtree",-apple-system,"Segoe UI",sans-serif;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-text-size-adjust:100%}
+body{min-height:100vh;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2{margin:0}
+.hidden{display:none!important}
+#app{max-width:520px;margin:0 auto;padding-bottom:calc(110px + var(--safe-b))}
+
+/* --- en-tête semaine --- */
+.w-head{padding:calc(20px + var(--safe-t)) 20px 18px;display:flex;flex-direction:column;gap:14px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.circle{width:44px;height:44px;border-radius:22px;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.range{border:0;background:transparent;font-size:15px;font-weight:600;color:var(--muted);min-height:44px;padding:0 8px}
+.title{font-family:var(--display);font-weight:800;font-size:40px;line-height:1;letter-spacing:-.02em;color:var(--plum)}
+
+/* --- lignes jour --- */
+.days{padding:0 16px;display:flex;flex-direction:column;gap:8px}
+.day{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:14px;min-height:64px;color:var(--ink)}
+.day .dn{width:46px;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.day .ds{font-size:12px;font-weight:600;color:var(--muted)}
+.day .dd{font-family:var(--display);font-weight:800;font-size:26px;line-height:1.05}
+.day .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.day .st{font-size:15px;font-weight:600}
+.day .ml{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day svg{color:var(--muted);flex-shrink:0}
+.day.today{background:var(--plum);border-color:var(--plum);color:var(--on-plum)}
+.day.today .ds,.day.today .ml,.day.today svg{color:var(--on-plum-muted)}
+
+/* --- cartes & tâches --- */
+.stack{padding:18px 16px 0;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px 6px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px}
+.chip{font-size:13px;font-weight:600;padding:3px 10px;border-radius:10px}
+.small{font-size:13px;color:var(--muted)}
+.weekbox{background:var(--sand);border-radius:16px;padding:14px 14px 6px}
+.weekbox.in-week{margin:18px 16px 0}
+.h2{font-family:var(--display);font-weight:600;font-size:20px;color:var(--ink)}
+.count{font-size:14px;font-weight:600;color:var(--plum);white-space:nowrap}
+.empty{font-size:15px;color:var(--muted);padding:6px 0 12px}
+.task{width:100%;min-height:48px;border:0;background:transparent;padding:0;display:flex;align-items:center;gap:12px;text-align:left;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.box{width:24px;height:24px;border-radius:12px;border:2px solid var(--ring);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.box svg{display:none}
+.task .lbl{font-size:16px;line-height:1.3;padding:4px 0;word-break:break-word}
+.task.done .box{background:var(--plum);border-color:var(--plum)}
+.task.done .box svg{display:block}
+.task.done .lbl{color:var(--muted);text-decoration:line-through}
+
+/* --- vue jour --- */
+.d-head{background:var(--plum);color:var(--on-plum);padding:calc(12px + var(--safe-t)) 20px 22px;border-radius:0 0 28px 28px;display:flex;flex-direction:column;gap:14px}
+.back{align-self:flex-start;border:0;background:transparent;color:var(--on-plum-muted);display:flex;align-items:center;gap:4px;font-size:15px;font-weight:500;min-height:44px;padding:0}
+.wd{font-size:15px;color:var(--on-plum-muted)}
+.d-title{font-family:var(--display);font-weight:800;font-size:40px;line-height:1;letter-spacing:-.02em}
+.ctr{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ctr b{font-family:var(--display);font-weight:800;font-size:30px;line-height:1}
+.ctr span{font-size:15px;color:var(--on-plum-muted)}
+.bar{height:6px;border-radius:3px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--rose);transition:width .25s}
+.meals{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
+.field input{height:46px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font:400 16px var(--body);color:var(--ink);background:var(--field);width:100%;-webkit-appearance:none}
+.field input:focus{outline:none;border:2px solid var(--plum);padding:0 11px}
+
+/* --- boutons flottants --- */
+.fab{position:fixed;right:max(20px,calc(50% - 240px));bottom:calc(24px + var(--safe-b));height:56px;border-radius:28px;border:0;background:var(--plum);color:var(--on-plum);
+  display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:16px;box-shadow:0 6px 18px rgba(77,36,61,.35);padding:0 22px;z-index:5}
+.fab.round{width:56px;padding:0}
+
+/* --- feuille d'ajout --- */
+.overlay{position:fixed;inset:0;background:rgba(58,27,46,.5);z-index:10;display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+.sheet{width:100%;max-width:520px;max-height:92vh;overflow-y:auto;background:var(--card);border-radius:28px 28px 0 0;padding:12px 20px calc(24px + var(--safe-b));display:flex;flex-direction:column;gap:20px;animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@keyframes fade{from{opacity:0}}
+.grab{align-self:center;width:40px;height:5px;border-radius:3px;background:var(--line)}
+.s-head{display:flex;align-items:center;justify-content:space-between}
+.s-title{font-family:var(--display);font-weight:800;font-size:26px;color:var(--ink)}
+.close{width:44px;height:44px;border-radius:22px;border:0;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.sec{display:flex;flex-direction:column;gap:8px}
+.lab{font-size:13px;font-weight:600;color:var(--muted)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg);padding:4px;border-radius:14px}
+.seg button{height:40px;border:0;border-radius:10px;background:transparent;font-size:15px;font-weight:500;color:var(--muted)}
+.seg button.on{background:var(--field);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(77,36,61,.15)}
+.pick{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.pick button{height:54px;border:1px solid var(--line);border-radius:12px;background:var(--field);font-size:12px;font-weight:500;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
+.pick button b{font-size:16px;font-weight:600;color:var(--ink)}
+.pick button.on{background:var(--plum);border-color:var(--plum);color:var(--on-plum-muted)}
+.pick button.on b{color:var(--on-plum)}
+.cats{display:flex;flex-wrap:wrap;gap:8px}
+.cats button{height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--line);background:var(--field);font-size:15px;font-weight:500;color:var(--ink)}
+.cats button.on{border:2px solid currentColor;padding:0 15px;font-weight:600}
+.cats .newcat{border:1px dashed var(--ring);background:transparent;color:var(--plum);font-weight:600;display:flex;align-items:center;gap:6px;padding:0 14px}
+.newrow{display:flex;gap:8px}
+.newrow input{flex:1;min-width:0;height:46px;border:2px solid var(--plum);border-radius:12px;padding:0 11px;font:400 16px var(--body);color:var(--ink);background:var(--field);-webkit-appearance:none;outline:none}
+.newrow button{height:46px;border:0;border-radius:12px;background:var(--plum);color:var(--on-plum);font-weight:600;padding:0 16px}
+.submit{height:54px;border:0;border-radius:16px;background:var(--plum);color:var(--on-plum);font-weight:600;font-size:17px}
+.submit:disabled{opacity:.45}
+.hint{font-size:13px;color:var(--muted);text-align:center;margin-top:-8px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="sheet-root"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Données ---------- */
+var KEY = "planner-v1";
+var PALETTE = [
+  {tint:"#EDD4B2", text:"#5A3A12"},
+  {tint:"#D0A98F", text:"#3F1E14"},
+  {tint:"#CAC2B5", text:"#3A332A"},
+  {tint:"#E3C6C0", text:"#4D243D"},
+  {tint:"#DCCFB8", text:"#3F3524"}
+];
+
+function defaults(){
+  return {
+    v:1,
+    cats:[{id:"maison",name:"Maison",p:0},{id:"business",name:"Business",p:1},{id:"perso",name:"Perso",p:2}],
+    tasks:[], meals:{}, lastCat:"maison"
+  };
+}
+function load(){
+  try{
+    var d = JSON.parse(localStorage.getItem(KEY));
+    if(d && Array.isArray(d.tasks) && Array.isArray(d.cats)){ d.meals = d.meals || {}; return d; }
+  }catch(e){}
+  return defaults();
+}
+var db = load();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+// Demande à iOS de ne pas effacer les données
+if(navigator.storage && navigator.storage.persist){ try{ navigator.storage.persist(); }catch(e){} }
+
+/* ---------- Dates ---------- */
+function pad(n){ return (n<10?"0":"") + n; }
+function ymd(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function parse(s){ var p=s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+function addDays(d,n){ var x=new Date(d.getFullYear(), d.getMonth(), d.getDate()+n); return x; }
+function monday(d){ var wd=(d.getDay()+6)%7; return addDays(d,-wd); }
+function todayKey(){ return ymd(new Date()); }
+var SHORT = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+var fmtDayMonth = new Intl.DateTimeFormat("fr-FR",{day:"numeric", month:"long"});
+var fmtShort = new Intl.DateTimeFormat("fr-FR",{day:"numeric", month:"short"});
+var fmtWeekday = new Intl.DateTimeFormat("fr-FR",{weekday:"long"});
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+/* ---------- Utilitaires ---------- */
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function catById(id){ for(var i=0;i<db.cats.length;i++) if(db.cats[i].id===id) return db.cats[i]; return null; }
+function colors(c){ return PALETTE[(c ? c.p : 2) % PALETTE.length]; }
+function dayTasks(k){ return db.tasks.filter(function(t){ return t.date===k; }); }
+function weekTasks(wk){ return db.tasks.filter(function(t){ return t.week===wk; }); }
+function leftOf(list){ return list.filter(function(t){ return !t.done; }).length; }
+
+var ICON = {
+  left:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
+  right:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>',
+  plus:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBF3EA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'
+};
+
+/* ---------- État de l'interface ---------- */
+var ui = { view:"week", weekStart: monday(new Date()), day: todayKey() };
+var app = document.getElementById("app");
+var sheetRoot = document.getElementById("sheet-root");
+
+function taskHTML(t){
+  return '<button class="task'+(t.done?' done':'')+'" data-task="'+t.id+'" aria-pressed="'+(t.done?'true':'false')+'">'+
+    '<span class="box">'+ICON.check+'</span><span class="lbl">'+esc(t.title)+'</span></button>';
+}
+function weekBlockHTML(wk, extraClass){
+  var list = weekTasks(wk), left = leftOf(list);
+  var label = list.length===0 ? "Aucune tâche" : (left===0 ? "Tout est fait ✅" : left+" sur "+list.length+" à faire");
+  return '<section class="weekbox '+(extraClass||'')+'">'+
+    '<div class="card-head"><h2 class="h2">Tâches de la semaine</h2><span class="count">'+label+'</span></div>'+
+    (list.length ? list.map(taskHTML).join("") : '<div class="empty">Ajoute une tâche « Dans la semaine » pour la retrouver ici.</div>')+
+  '</section>';
+}
+
+/* ---------- Vue semaine ---------- */
+function renderWeek(){
+  var ws = ui.weekStart, we = addDays(ws,6), tk = todayKey();
+  var rows = "";
+  for(var i=0;i<7;i++){
+    var d = addDays(ws,i), k = ymd(d), list = dayTasks(k), done = list.length-leftOf(list);
+    var st = list.length===0 ? "Rien de prévu"
+           : done===list.length ? "Toutes les tâches ont été faites ✅"
+           : done===0 ? "Aucune tâche faite ‼️"
+           : (list.length-done)+" sur "+list.length+" à faire";
+    var m = db.meals[k] || {}, parts = [];
+    if(m.midi) parts.push("Midi : "+m.midi);
+    if(m.soir) parts.push("Soir : "+m.soir);
+    var ml = parts.length ? parts.join(" · ") : "Aucun repas prévu";
+    rows += '<button class="day'+(k===tk?' today':'')+'" data-day="'+k+'">'+
+      '<span class="dn"><span class="ds">'+SHORT[i]+'</span><span class="dd">'+d.getDate()+'</span></span>'+
+      '<span class="info"><span class="st">'+esc(st)+'</span><span class="ml">'+esc(ml)+'</span></span>'+ICON.right+'</button>';
+  }
+  var isCurrent = ymd(ws)===ymd(monday(new Date()));
+  app.innerHTML =
+    '<header class="w-head">'+
+      '<div class="nav">'+
+        '<button class="circle" data-act="prev" aria-label="Semaine précédente">'+ICON.left+'</button>'+
+        '<button class="range" data-act="thisweek" aria-label="Revenir à cette semaine">'+fmtShort.format(ws)+' – '+fmtShort.format(we)+(isCurrent?'':' ↺')+'</button>'+
+        '<button class="circle" data-act="next" aria-label="Semaine suivante">'+ICON.right+'</button>'+
+      '</div>'+
+      '<h1 class="title">Ma semaine</h1>'+
+    '</header>'+
+    '<div class="days">'+rows+'</div>'+
+    weekBlockHTML(ymd(ws), "in-week")+
+    '<button class="fab" data-act="add">'+ICON.plus+'Ajouter une tâche</button>';
+}
+
+/* ---------- Vue jour ---------- */
+function renderDay(){
+  var k = ui.day, d = parse(k), list = dayTasks(k), left = leftOf(list), total = list.length;
+  var ctr;
+  if(total===0) ctr = '<div class="ctr"><span>Aucune tâche prévue</span></div>';
+  else if(left===0) ctr = '<div class="ctr"><span style="color:var(--on-plum);font-weight:600;font-size:16px">Toutes les tâches ont été faites ✅</span></div>';
+  else ctr = '<div class="ctr"><b>'+left+'</b><span>'+(left>1?'tâches restantes':'tâche restante')+' sur '+total+'</span></div>';
+  var pct = total ? Math.round((total-left)/total*100) : 0;
+
+  // regroupement par catégorie, dans l'ordre des catégories
+  var groups = "", used = {};
+  db.cats.forEach(function(c){
+    var g = list.filter(function(t){ return t.cat===c.id; });
+    if(!g.length) return; used[c.id]=1;
+    groups += groupHTML(c.name, colors(c), g);
+  });
+  var orphans = list.filter(function(t){ return !used[t.cat]; });
+  if(orphans.length) groups += groupHTML("Sans catégorie", PALETTE[2], orphans);
+  if(!groups) groups = '<section class="card"><div class="empty">Rien de prévu ce jour-là.</div></section>';
+
+  var m = db.meals[k] || {};
+  app.innerHTML =
+    '<header class="d-head">'+
+      '<button class="back" data-act="back">'+ICON.left+'Semaine</button>'+
+      '<div><div class="wd">'+cap(fmtWeekday.format(d))+'</div><h1 class="d-title">'+fmtDayMonth.format(d)+'</h1></div>'+
+      '<div style="display:flex;flex-direction:column;gap:8px">'+ctr+'<div class="bar"><i style="width:'+pct+'%"></i></div></div>'+
+    '</header>'+
+    '<div class="stack">'+
+      groups+
+      '<section class="meals"><h2 class="h2">Repas du jour</h2>'+
+        '<label class="field">Midi<input type="text" data-meal="midi" value="'+esc(m.midi||"")+'" placeholder="Qu\'est-ce qu\'on mange ?" enterkeyhint="done" autocomplete="off"></label>'+
+        '<label class="field">Soir<input type="text" data-meal="soir" value="'+esc(m.soir||"")+'" placeholder="Qu\'est-ce qu\'on mange ?" enterkeyhint="done" autocomplete="off"></label>'+
+      '</section>'+
+      weekBlockHTML(ymd(monday(d)))+
+    '</div>'+
+    '<button class="fab round" data-act="add" aria-label="Ajouter une tâche">'+ICON.plus+'</button>';
+}
+function groupHTML(name, col, tasks){
+  var l = leftOf(tasks);
+  return '<section class="card"><div class="card-head">'+
+    '<h2 class="chip" style="background:'+col.tint+';color:'+col.text+'">'+esc(name)+'</h2>'+
+    '<span class="small">'+(l===0?'Tout est fait':l+' à faire')+'</span></div>'+
+    tasks.map(taskHTML).join("")+'</section>';
+}
+
+function render(){ if(ui.view==="day") renderDay(); else renderWeek(); }
+function go(view){ ui.view = view; render(); window.scrollTo(0,0); }
+
+/* ---------- Interactions ---------- */
+var pressTimer = null, pressFired = false, pressStart = null;
+app.addEventListener("pointerdown", function(e){
+  var el = e.target.closest("[data-task]"); if(!el) return;
+  pressFired = false; pressStart = {x:e.clientX, y:e.clientY};
+  pressTimer = setTimeout(function(){
+    pressFired = true;
+    var t = db.tasks.find(function(x){ return x.id===el.dataset.task; });
+    if(t && confirm("Supprimer « "+t.title+" » ?")){
+      db.tasks = db.tasks.filter(function(x){ return x.id!==t.id; }); save(); render();
+    }
+  }, 600);
+});
+function cancelPress(){ clearTimeout(pressTimer); pressTimer=null; }
+app.addEventListener("pointerup", cancelPress);
+app.addEventListener("pointercancel", cancelPress);
+app.addEventListener("pointermove", function(e){
+  if(pressTimer && pressStart && (Math.abs(e.clientX-pressStart.x)>10 || Math.abs(e.clientY-pressStart.y)>10)) cancelPress();
+});
+app.addEventListener("contextmenu", function(e){ if(e.target.closest("[data-task]")) e.preventDefault(); });
+
+app.addEventListener("click", function(e){
+  var t = e.target.closest("[data-task]");
+  if(t){
+    if(pressFired){ pressFired=false; return; }
+    var task = db.tasks.find(function(x){ return x.id===t.dataset.task; });
+    if(task){ task.done = !task.done; save(); render(); }
+    return;
+  }
+  var day = e.target.closest("[data-day]");
+  if(day){ ui.day = day.dataset.day; go("day"); return; }
+  var a = e.target.closest("[data-act]"); if(!a) return;
+  switch(a.dataset.act){
+    case "prev": ui.weekStart = addDays(ui.weekStart,-7); render(); break;
+    case "next": ui.weekStart = addDays(ui.weekStart,7); render(); break;
+    case "thisweek": ui.weekStart = monday(new Date()); render(); break;
+    case "back": ui.weekStart = monday(parse(ui.day)); go("week"); break;
+    case "add": openSheet(); break;
+  }
+});
+
+// Repas : enregistrés à chaque frappe, sans redessiner la page
+app.addEventListener("input", function(e){
+  var f = e.target.dataset && e.target.dataset.meal; if(!f) return;
+  var k = ui.day, m = db.meals[k] || (db.meals[k] = {});
+  m[f] = e.target.value.trim() ? e.target.value : "";
+  if(!m.midi && !m.soir) delete db.meals[k];
+  save();
+});
+app.addEventListener("keydown", function(e){
+  if(e.key==="Enter" && e.target.dataset && e.target.dataset.meal) e.target.blur();
+});
+
+/* ---------- Feuille d'ajout ---------- */
+var sh = null;
+function openSheet(){
+  var ws = ui.view==="day" ? monday(parse(ui.day)) : ui.weekStart;
+  var def;
+  if(ui.view==="day") def = ui.day;
+  else { var tk = todayKey(); def = (tk>=ymd(ws) && tk<=ymd(addDays(ws,6))) ? tk : ymd(ws); }
+  sh = { ws:ws, mode:"day", day:def, cat: catById(db.lastCat) ? db.lastCat : db.cats[0].id, title:"", adding:false, newName:"" };
+  renderSheet(true);
+}
+function closeSheet(){ sh = null; sheetRoot.innerHTML = ""; }
+function renderSheet(focusTitle){
+  var days = "";
+  for(var i=0;i<7;i++){
+    var d = addDays(sh.ws,i), k = ymd(d);
+    days += '<button data-pick="'+k+'" class="'+(k===sh.day?'on':'')+'" aria-pressed="'+(k===sh.day)+'">'+SHORT[i]+'<b>'+d.getDate()+'</b></button>';
+  }
+  var cats = db.cats.map(function(c){
+    var col = colors(c), on = c.id===sh.cat;
+    return '<button data-cat="'+c.id+'" class="'+(on?'on':'')+'" aria-pressed="'+on+'" style="'+(on?'background:'+col.tint+';color:'+col.text:'')+'">'+esc(c.name)+'</button>';
+  }).join("");
+  cats += sh.adding ? '' : '<button class="newcat" data-s="newcat">'+ICON.plus.replace(/20/g,"16")+'Nouvelle catégorie</button>';
+  var newRow = sh.adding ? '<div class="newrow"><input type="text" id="newcat" placeholder="Nom de la catégorie" value="'+esc(sh.newName)+'" enterkeyhint="done" autocomplete="off"><button data-s="savecat">OK</button></div>' : '';
+
+  sheetRoot.innerHTML =
+    '<div class="overlay" data-s="overlay">'+
+      '<div class="sheet" role="dialog" aria-modal="true" aria-label="Nouvelle tâche">'+
+        '<div class="grab"></div>'+
+        '<div class="s-head"><h2 class="s-title">Nouvelle tâche</h2><button class="close" data-s="close" aria-label="Fermer">'+ICON.x+'</button></div>'+
+        '<label class="field">Tâche<input type="text" id="title" value="'+esc(sh.title)+'" placeholder="Ex. Nettoyer le frigo" enterkeyhint="done" autocomplete="off"></label>'+
+        '<div class="sec"><div class="lab">Quand</div>'+
+          '<div class="seg"><button data-mode="day" class="'+(sh.mode==="day"?'on':'')+'">Un jour précis</button><button data-mode="week" class="'+(sh.mode==="week"?'on':'')+'">Dans la semaine</button></div>'+
+          (sh.mode==="day" ? '<div class="pick">'+days+'</div>' : '<div class="small">Semaine du '+fmtShort.format(sh.ws)+' au '+fmtShort.format(addDays(sh.ws,6))+'</div>')+
+        '</div>'+
+        (sh.mode==="day" ? '<div class="sec"><div class="lab">Catégorie</div><div class="cats">'+cats+'</div>'+newRow+'</div>' : '')+
+        '<button class="submit" data-s="submit"'+(sh.title.trim()?'':' disabled')+'>Ajouter la tâche</button>'+
+      '</div>'+
+    '</div>';
+  if(focusTitle){ var ti = document.getElementById("title"); if(ti) ti.focus(); }
+  if(sh.adding){ var ni = document.getElementById("newcat"); if(ni){ ni.focus(); } }
+}
+function saveNewCat(){
+  var name = (sh.newName||"").trim();
+  if(!name){ sh.adding=false; renderSheet(); return; }
+  var exist = db.cats.find(function(c){ return c.name.toLowerCase()===name.toLowerCase(); });
+  if(exist){ sh.cat = exist.id; }
+  else{
+    var maxP = db.cats.reduce(function(m,c){ return Math.max(m,c.p); }, -1);
+    var c = { id:uid(), name:name, p:maxP+1 };
+    db.cats.push(c); save(); sh.cat = c.id;
+  }
+  sh.adding=false; sh.newName=""; renderSheet();
+}
+function submit(){
+  var title = sh.title.trim(); if(!title) return;
+  if(sh.adding && sh.newName.trim()) saveNewCat();
+  var t = { id:uid(), title:title, done:false };
+  if(sh.mode==="day"){ t.date = sh.day; t.cat = sh.cat; db.lastCat = sh.cat; }
+  else { t.week = ymd(sh.ws); }
+  db.tasks.push(t); save(); closeSheet(); render();
+}
+sheetRoot.addEventListener("click", function(e){
+  if(!sh) return;
+  var el;
+  if(e.target.dataset && e.target.dataset.s==="overlay"){ closeSheet(); return; }
+  if((el = e.target.closest("[data-pick]"))){ sh.day = el.dataset.pick; renderSheet(); return; }
+  if((el = e.target.closest("[data-mode]"))){ sh.mode = el.dataset.mode; renderSheet(); return; }
+  if((el = e.target.closest("[data-cat]"))){ sh.cat = el.dataset.cat; renderSheet(); return; }
+  if((el = e.target.closest("[data-s]"))){
+    var s = el.dataset.s;
+    if(s==="close") closeSheet();
+    else if(s==="newcat"){ sh.adding=true; renderSheet(); }
+    else if(s==="savecat") saveNewCat();
+    else if(s==="submit") submit();
+  }
+});
+sheetRoot.addEventListener("input", function(e){
+  if(!sh) return;
+  if(e.target.id==="title"){
+    sh.title = e.target.value;
+    var b = sheetRoot.querySelector(".submit"); if(b) b.disabled = !sh.title.trim();
+  } else if(e.target.id==="newcat"){ sh.newName = e.target.value; }
+});
+sheetRoot.addEventListener("keydown", function(e){
+  if(e.key!=="Enter" || !sh) return;
+  if(e.target.id==="newcat"){ e.preventDefault(); saveNewCat(); }
+  else if(e.target.id==="title"){ e.preventDefault(); e.target.blur(); }
+});
+
+/* ---------- Démarrage ---------- */
+// Si l'app reste ouverte en arrière-plan, on rafraîchit « aujourd'hui » au retour
+document.addEventListener("visibilitychange", function(){ if(!document.hidden && !sh) render(); });
+render();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+}
+})();
+</script>
+</body>
+</html>
