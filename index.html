@@ -94,6 +94,42 @@ h1,h2{margin:0}
 .fab{position:fixed;right:max(20px,calc(50% - 240px));bottom:calc(24px + var(--safe-b));height:56px;border-radius:28px;border:0;background:var(--plum);color:var(--on-plum);
   display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:16px;box-shadow:0 6px 18px rgba(77,36,61,.35);padding:0 22px;z-index:5}
 .fab.round{width:56px;padding:0}
+body.tabs #app{padding-bottom:calc(190px + var(--safe-b))}
+body.tabs .fab{bottom:calc(100px + var(--safe-b))}
+body.listview #app{padding-bottom:calc(110px + var(--safe-b))}
+
+/* --- menu --- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding:0 24px var(--safe-b);display:flex;justify-content:center}
+.tabbar-in{display:flex;width:100%;max-width:420px}
+.tab{flex:1;border:0;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 10px;font-size:12px;font-weight:500;min-height:60px}
+.tab .pill{width:56px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.tab.on{color:var(--plum);font-weight:600}
+.tab.on .pill{background:var(--sand)}
+
+/* --- listes de courses --- */
+.lists{padding:0 16px;display:flex;flex-direction:column;gap:10px}
+.lcard{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;color:var(--ink)}
+.lcard .lt{font-family:var(--display);font-weight:600;font-size:19px;word-break:break-word}
+.lcard .row{display:flex;align-items:center;gap:10px}
+.lcard .pb{flex:1;height:6px;border-radius:3px;background:#E4D3BF;overflow:hidden}
+.lcard .pb i{display:block;height:100%;border-radius:3px;background:var(--rose)}
+.lcard svg{color:var(--muted);flex-shrink:0}
+.sub{font-size:15px;color:var(--muted)}
+.l-head{padding:calc(12px + var(--safe-t)) 20px 0;display:flex;flex-direction:column;gap:8px}
+.l-head .a-back{margin-bottom:-2px}
+.ltitle{width:100%;resize:none;overflow:hidden;display:block;border:2px solid transparent;border-radius:12px;background:transparent;padding:2px 8px;margin-left:-10px;
+  font-family:var(--display);font-weight:800;font-size:34px;line-height:1.1;letter-spacing:-.02em;color:var(--plum);-webkit-appearance:none}
+.ltitle:focus{outline:none;border-color:var(--plum);background:var(--field)}
+.ltitle::placeholder{color:#A88E9B}
+.addrow{padding:14px 16px 0;display:flex;gap:8px}
+.addrow input{flex:1;min-width:0;height:48px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font:400 16px var(--body);color:var(--ink);background:var(--field);-webkit-appearance:none}
+.addrow input:focus{outline:none;border:2px solid var(--plum);padding:0 13px}
+.addrow button{width:48px;height:48px;border:0;border-radius:12px;background:var(--plum);color:var(--on-plum);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.caddie{background:var(--sand);border-radius:16px;padding:10px 14px 6px}
+.caddie .lab{color:var(--plum);margin-bottom:2px}
+.emptybox{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:28px 20px;text-align:center;font-size:15px;color:var(--muted)}
+.donebar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);padding:12px 16px calc(14px + var(--safe-b));display:flex;justify-content:center}
+.donebar button{width:100%;max-width:488px;height:54px;border:0;border-radius:16px;background:var(--plum);color:var(--on-plum);font-weight:600;font-size:17px}
 
 /* --- feuille d'ajout --- */
 .addpage{max-width:520px;margin:0 auto;min-height:100vh;padding:calc(12px + var(--safe-t)) 20px calc(40px + var(--safe-b));display:flex;flex-direction:column;gap:22px;animation:fade .2s}
@@ -149,13 +185,13 @@ function defaults(){
   return {
     v:1,
     cats:[{id:"maison",name:"Maison",p:0},{id:"business",name:"Business",p:1},{id:"perso",name:"Perso",p:2}],
-    tasks:[], meals:{}, lastCat:"maison"
+    tasks:[], meals:{}, lists:[], lastCat:"maison"
   };
 }
 function load(){
   try{
     var d = JSON.parse(localStorage.getItem(KEY));
-    if(d && Array.isArray(d.tasks) && Array.isArray(d.cats)){ d.meals = d.meals || {}; return d; }
+    if(d && Array.isArray(d.tasks) && Array.isArray(d.cats)){ d.meals = d.meals || {}; d.lists = d.lists || []; return d; }
   }catch(e){}
   return defaults();
 }
@@ -192,11 +228,13 @@ var ICON = {
   right:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>',
   plus:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  cal:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+  cart:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.2l2.3 11h10.8l2.2-8H6.3"/><circle cx="9.5" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/></svg>',
   check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBF3EA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'
 };
 
 /* ---------- État de l'interface ---------- */
-var ui = { view:"week", weekStart: monday(new Date()), day: todayKey() };
+var ui = { tab:"planner", listId:null, view:"week", weekStart: monday(new Date()), day: todayKey() };
 var app = document.getElementById("app");
 var sheetRoot = document.getElementById("sheet-root");
 
@@ -293,19 +331,102 @@ function groupHTML(name, col, tasks){
     tasks.map(taskHTML).join("")+'</section>';
 }
 
-function render(){ if(ui.view==="day") renderDay(); else renderWeek(); }
+function tabbarHTML(){
+  function tab(id, icon, label){
+    var on = ui.tab===id;
+    return '<button class="tab'+(on?' on':'')+'" data-tab="'+id+'" aria-current="'+(on?'page':'false')+'"><span class="pill">'+icon+'</span>'+label+'</button>';
+  }
+  return '<nav class="tabbar" aria-label="Menu"><div class="tabbar-in">'+tab("planner",ICON.cal,"Planner")+tab("courses",ICON.cart,"Courses")+'</div></nav>';
+}
+function render(){
+  var inList = ui.tab==="courses" && ui.listId && getList(ui.listId);
+  if(ui.tab==="courses" && ui.listId && !inList) ui.listId = null;
+  document.body.classList.toggle("tabs", !inList);
+  document.body.classList.toggle("listview", !!inList);
+  if(ui.tab==="courses"){ if(inList) renderList(); else renderLists(); }
+  else if(ui.view==="day") renderDay(); else renderWeek();
+  if(!inList) app.insertAdjacentHTML("beforeend", tabbarHTML());
+}
 function go(view){ ui.view = view; render(); window.scrollTo(0,0); }
+
+/* ---------- Listes de courses ---------- */
+function getList(id){ for(var i=0;i<db.lists.length;i++) if(db.lists[i].id===id) return db.lists[i]; return null; }
+function renderLists(){
+  var n = db.lists.length;
+  var cards = db.lists.map(function(l){
+    var total = l.items.length, pris = l.items.filter(function(i){ return i.done; }).length;
+    var meta = total===0 ? "Liste vide" : (pris===total ? "Tout est pris ✅" : (total-pris)+" sur "+total+" à prendre");
+    return '<button class="lcard" data-list="'+l.id+'"><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">'+
+      '<span class="lt">'+esc(l.title || "Sans titre")+'</span>'+
+      '<span class="row"><span class="pb"><i style="width:'+(total?Math.round(pris/total*100):0)+'%"></i></span><span class="small" style="white-space:nowrap">'+meta+'</span></span>'+
+      '</span>'+ICON.right+'</button>';
+  }).join("");
+  app.innerHTML =
+    '<header class="w-head" style="gap:6px;padding-top:calc(28px + var(--safe-t))"><h1 class="title">Mes listes</h1>'+
+      '<div class="sub">'+(n===0 ? "Aucune liste en cours" : n+(n>1?" listes en cours":" liste en cours"))+'</div></header>'+
+    '<div class="lists">'+(cards || '<div class="emptybox">Pas encore de liste. Crée ta première liste de courses.</div>')+'</div>'+
+    '<button class="fab" data-act="newlist">'+ICON.plus+'Nouvelle liste</button>';
+}
+function itemHTML(i){
+  return '<button class="task'+(i.done?' done':'')+'" data-item="'+i.id+'" aria-pressed="'+(i.done?'true':'false')+'">'+
+    '<span class="box">'+ICON.check+'</span><span class="lbl">'+esc(i.label)+'</span></button>';
+}
+function renderList(focus){
+  var l = getList(ui.listId);
+  var todo = l.items.filter(function(i){ return !i.done; }), got = l.items.filter(function(i){ return i.done; });
+  var counter = l.items.length===0 ? "Liste vide" : (todo.length===0 ? "Tout est pris ✅" : todo.length+(todo.length>1?" articles":" article")+" à prendre sur "+l.items.length);
+  var body;
+  if(l.items.length===0) body = '<div class="emptybox">La liste est vide. Ajoute ton premier article juste au-dessus.</div>';
+  else body = (todo.length ? '<section class="card" style="padding:6px 14px">'+todo.map(itemHTML).join("")+'</section>' : '')+
+    (got.length ? '<section class="caddie"><div class="lab">Dans le caddie ('+got.length+')</div>'+got.map(itemHTML).join("")+'</section>' : '');
+  app.innerHTML =
+    '<header class="l-head">'+
+      '<button class="a-back" data-act="lists">'+ICON.left+'Listes</button>'+
+      '<textarea class="ltitle" id="ltitle" rows="1" placeholder="Nom de la liste" aria-label="Nom de la liste" enterkeyhint="next" autocomplete="off">'+esc(l.title)+'</textarea>'+
+      '<div class="sub" style="font-weight:600">'+counter+'</div>'+
+    '</header>'+
+    '<div class="addrow"><input id="newitem" type="text" placeholder="Ajouter un article" enterkeyhint="done" autocomplete="off"><button data-act="additem" aria-label="Ajouter">'+ICON.plus+'</button></div>'+
+    '<div class="stack">'+body+'</div>'+
+    '<div class="donebar"><button data-act="listdone">Courses faites</button></div>';
+  fitTitle();
+  if(focus){ var el = document.getElementById(focus); if(el) el.focus({preventScroll:true}); }
+}
+function fitTitle(){ var t = document.getElementById("ltitle"); if(t){ t.style.height = "auto"; t.style.height = t.scrollHeight+"px"; } }
+function openList(id, focus){ ui.listId = id; render(); window.scrollTo(0,0); if(focus) renderList(focus); }
+function leaveList(){
+  var l = getList(ui.listId);
+  if(l){
+    if(!l.title.trim() && l.items.length===0){ db.lists = db.lists.filter(function(x){ return x.id!==l.id; }); }
+    else if(!l.title.trim()){ l.title = "Liste du "+ddmm(todayKey()); }
+    save();
+  }
+  ui.listId = null; render(); window.scrollTo(0,0);
+}
+function addItem(){
+  var inp = document.getElementById("newitem"), l = getList(ui.listId);
+  if(!inp || !l) return;
+  var v = inp.value.trim(); if(!v){ inp.blur(); return; }
+  l.items.push({ id:uid(), label:v, done:false }); save();
+  renderList("newitem");
+}
 
 /* ---------- Interactions ---------- */
 var pressTimer = null, pressFired = false, pressStart = null;
 app.addEventListener("pointerdown", function(e){
-  var el = e.target.closest("[data-task]"); if(!el) return;
+  var el = e.target.closest("[data-task],[data-item]"); if(!el) return;
   pressFired = false; pressStart = {x:e.clientX, y:e.clientY};
   pressTimer = setTimeout(function(){
     pressFired = true;
-    var t = db.tasks.find(function(x){ return x.id===el.dataset.task; });
-    if(t && confirm("Supprimer « "+t.title+" » ?")){
-      db.tasks = db.tasks.filter(function(x){ return x.id!==t.id; }); save(); render();
+    if(el.dataset.task){
+      var t = db.tasks.find(function(x){ return x.id===el.dataset.task; });
+      if(t && confirm("Supprimer « "+t.title+" » ?")){
+        db.tasks = db.tasks.filter(function(x){ return x.id!==t.id; }); save(); render();
+      }
+    } else {
+      var l = getList(ui.listId), it = l && l.items.find(function(x){ return x.id===el.dataset.item; });
+      if(it && confirm("Retirer « "+it.label+" » de la liste ?")){
+        l.items = l.items.filter(function(x){ return x.id!==it.id; }); save(); render();
+      }
     }
   }, 600);
 });
@@ -315,7 +436,7 @@ app.addEventListener("pointercancel", cancelPress);
 app.addEventListener("pointermove", function(e){
   if(pressTimer && pressStart && (Math.abs(e.clientX-pressStart.x)>10 || Math.abs(e.clientY-pressStart.y)>10)) cancelPress();
 });
-app.addEventListener("contextmenu", function(e){ if(e.target.closest("[data-task]")) e.preventDefault(); });
+app.addEventListener("contextmenu", function(e){ if(e.target.closest("[data-task],[data-item]")) e.preventDefault(); });
 
 app.addEventListener("click", function(e){
   var t = e.target.closest("[data-task]");
@@ -325,6 +446,17 @@ app.addEventListener("click", function(e){
     if(task){ task.done = !task.done; save(); render(); }
     return;
   }
+  var it = e.target.closest("[data-item]");
+  if(it){
+    if(pressFired){ pressFired=false; return; }
+    var l = getList(ui.listId), item = l && l.items.find(function(x){ return x.id===it.dataset.item; });
+    if(item){ item.done = !item.done; save(); render(); }
+    return;
+  }
+  var tb = e.target.closest("[data-tab]");
+  if(tb){ if(ui.tab!==tb.dataset.tab){ ui.tab = tb.dataset.tab; render(); window.scrollTo(0,0); } return; }
+  var lc = e.target.closest("[data-list]");
+  if(lc){ openList(lc.dataset.list); return; }
   var day = e.target.closest("[data-day]");
   if(day){ ui.day = day.dataset.day; go("day"); return; }
   var a = e.target.closest("[data-act]"); if(!a) return;
@@ -334,11 +466,24 @@ app.addEventListener("click", function(e){
     case "thisweek": ui.weekStart = monday(new Date()); render(); break;
     case "back": ui.weekStart = monday(parse(ui.day)); go("week"); break;
     case "add": openSheet(); break;
+    case "newlist":
+      var nl = { id:uid(), title:"", items:[] }; db.lists.unshift(nl); save();
+      openList(nl.id, "ltitle"); break;
+    case "lists": leaveList(); break;
+    case "additem": addItem(); break;
+    case "listdone":
+      var cur = getList(ui.listId);
+      if(cur && confirm("Courses faites ? La liste « "+(cur.title.trim() || "Sans titre")+" » va être supprimée.")){
+        db.lists = db.lists.filter(function(x){ return x.id!==cur.id; }); save();
+        ui.listId = null; render(); window.scrollTo(0,0);
+      }
+      break;
   }
 });
 
 // Repas : enregistrés à chaque frappe, sans redessiner la page
 app.addEventListener("input", function(e){
+  if(e.target.id==="ltitle"){ var l = getList(ui.listId); if(l){ l.title = e.target.value.replace(/\n/g," "); save(); } fitTitle(); return; }
   var f = e.target.dataset && e.target.dataset.meal; if(!f) return;
   var k = ui.day, m = db.meals[k] || (db.meals[k] = {});
   m[f] = e.target.value.trim() ? e.target.value : "";
@@ -346,7 +491,10 @@ app.addEventListener("input", function(e){
   save();
 });
 app.addEventListener("keydown", function(e){
-  if(e.key==="Enter" && e.target.dataset && e.target.dataset.meal) e.target.blur();
+  if(e.key!=="Enter") return;
+  if(e.target.dataset && e.target.dataset.meal) e.target.blur();
+  else if(e.target.id==="newitem"){ e.preventDefault(); addItem(); }
+  else if(e.target.id==="ltitle"){ e.preventDefault(); var n = document.getElementById("newitem"); if(n) n.focus(); }
 });
 
 /* ---------- Feuille d'ajout ---------- */

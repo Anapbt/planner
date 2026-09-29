@@ -1,5 +1,5 @@
 // Change ce numéro à chaque mise à jour pour forcer le rafraîchissement du cache
-const CACHE = "planner-v3";
+const CACHE = "planner-v4";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png",
