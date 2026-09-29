@@ -69,6 +69,7 @@ h1,h2{margin:0}
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .box{width:24px;height:24px;border-radius:12px;border:2px solid var(--ring);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .box svg{display:none}
+.task .from{color:var(--muted);font-size:14px;white-space:nowrap}
 .task .lbl{font-size:16px;line-height:1.3;padding:4px 0;word-break:break-word}
 .task.done .box{background:var(--plum);border-color:var(--plum)}
 .task.done .box svg{display:block}
@@ -199,9 +200,11 @@ var ui = { view:"week", weekStart: monday(new Date()), day: todayKey() };
 var app = document.getElementById("app");
 var sheetRoot = document.getElementById("sheet-root");
 
+function ddmm(k){ var p=k.split("-"); return p[2]+"/"+p[1]; }
 function taskHTML(t){
+  var orig = t.from || t.fromWeek;
   return '<button class="task'+(t.done?' done':'')+'" data-task="'+t.id+'" aria-pressed="'+(t.done?'true':'false')+'">'+
-    '<span class="box">'+ICON.check+'</span><span class="lbl">'+esc(t.title)+'</span></button>';
+    '<span class="box">'+ICON.check+'</span><span class="lbl">'+esc(t.title)+(orig?' <span class="from">('+ddmm(orig)+')</span>':'')+'</span></button>';
 }
 function weekBlockHTML(wk, extraClass){
   var list = weekTasks(wk), left = leftOf(list);
@@ -444,9 +447,24 @@ sheetRoot.addEventListener("keydown", function(e){
   else if(e.target.id==="title"){ e.preventDefault(); if(sh.title.trim()) submit(); else e.target.blur(); }
 });
 
+/* ---------- Report des tâches non faites ---------- */
+// Tâche du jour non cochée d'un jour passé -> aujourd'hui.
+// Tâche de la semaine non cochée d'une semaine passée -> semaine en cours.
+// On garde la date d'origine (from / fromWeek) pour afficher le repère.
+function rollover(){
+  var tk = todayKey(), wk = ymd(monday(new Date())), changed = false;
+  db.tasks.forEach(function(t){
+    if(t.done) return;
+    if(t.date && t.date < tk){ if(!t.from) t.from = t.date; t.date = tk; changed = true; }
+    if(t.week && t.week < wk){ if(!t.fromWeek) t.fromWeek = t.week; t.week = wk; changed = true; }
+  });
+  if(changed) save();
+}
+
 /* ---------- Démarrage ---------- */
 // Si l'app reste ouverte en arrière-plan, on rafraîchit « aujourd'hui » au retour
-document.addEventListener("visibilitychange", function(){ if(!document.hidden && !sh) render(); });
+document.addEventListener("visibilitychange", function(){ if(!document.hidden){ rollover(); if(!sh) render(); } });
+rollover();
 render();
 
 if("serviceWorker" in navigator){
